@@ -1,0 +1,41 @@
+name: SAST Scan Security Gate
+
+# Запускать пайплайн при пуше или pull request в ветку main
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  bandit_security_gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          
+      - name: Install Bandit
+        run: pip install bandit
+        
+      - name: Run Bandit Scan
+        run: |
+          echo "Запуск статического анализа безопасности кода..."
+          bandit -r . -lll
+
+  semgrep_security_gate:
+    runs-on: ubuntu-latest
+    container:
+      image: returntocorp/semgrep:latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Run Semgrep Scan
+        run: |
+          echo "Запуск расширенного анализа Semgrep..."
+          semgrep scan --config "p/python" --error .
